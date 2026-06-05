@@ -6,3 +6,5 @@ Repositório para o Projeto Final da Matéria de C06
 - Nome: Leonardo Cruz Zanin; Matrícula: 2169; Curso: GEC.
 
 ![Diagrama UML do Projeto](https://github.com/nathanBAg1/C06-Projeto_Final/blob/main/UML%20do%20Projeto.png)
+
+## OBS: Foi utilizada Inteligência Artificial nesse Projeto para Debug e Otimização do Código, sendo eles o ChatGPT e Claude.
