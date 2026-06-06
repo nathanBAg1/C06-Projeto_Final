@@ -18,8 +18,12 @@ public class Supervisor extends Pessoa {
     @Override
     public void confereSeusDadosEspecificos()
     {
-        System.out.println("Responsavel pela sala :" + sala.getNumeroSala());
-        System.out.println("Quantidade de alunos suportados pela sala :" + sala.getCapacidadeSala());
+        try {
+            System.out.println("Responsavel pela sala :" + sala.getNumeroSala());
+            System.out.println("Quantidade de alunos suportados pela sala :" + sala.getCapacidadeSala());
+        } catch (NullPointerException e) {
+            System.out.println("Erro ao recuperar dados.");
+        }
     }
 
     @Override
