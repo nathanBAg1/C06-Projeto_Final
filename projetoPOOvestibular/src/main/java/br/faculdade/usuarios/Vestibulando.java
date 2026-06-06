@@ -22,7 +22,11 @@ public class Vestibulando extends Pessoa implements ConsultarNota {
     @Override
     public void confereSeusDadosEspecificos()
     {
-        System.out.println("Alocado para a sala " +  this.sala.getNumeroSala());
+        try {
+            System.out.println("Alocado para a sala " + this.sala.getNumeroSala());
+        } catch (NullPointerException e) {
+            System.out.println("Erro ao recuperar sala.");
+        }
     }
 
     //adicionar a modificacao no bd dps
@@ -45,12 +49,16 @@ public class Vestibulando extends Pessoa implements ConsultarNota {
     public void pesquisaNota()
     {
         for(Vestibular vestibular : this.vestibulares) {
-            if (vestibular.getResultado() != null && vestibular.getResultado().getNota() >= 0) {
-                System.out.println("Nota: " + vestibular.getResultado().getNota());
-            } else if (vestibular.getResultado() == null) {
-                throw new NotaNaoEncontradaException("Nota não encontrada.");
-            } else if (vestibular.getResultado().getNota() < 0) {
-                throw new NotaInvalidaException("Nota com valor inválido.");
+            try {
+                if (vestibular.getResultado() != null && vestibular.getResultado().getNota() >= 0) {
+                    System.out.println("Nota: " + vestibular.getResultado().getNota());
+                } else if (vestibular.getResultado() == null) {
+                    throw new NotaNaoEncontradaException("Nota não encontrada.");
+                } else if (vestibular.getResultado().getNota() < 0) {
+                    throw new NotaInvalidaException("Nota com valor inválido.");
+                }
+            } catch (NullPointerException e){
+                System.out.println("Nota não encontrada.");
             }
         }
     }
