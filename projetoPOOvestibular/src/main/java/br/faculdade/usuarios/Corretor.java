@@ -6,9 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class Corretor extends Pessoa {
 
@@ -27,10 +24,10 @@ public class Corretor extends Pessoa {
     }
 
     // lanca as notas lendo de um arquivo (cpf ; id_vestibular ; nota)
-    // usa pool de threads: cada nota e um UPDATE independente (lote I/O-bound)
+    // cada nota e lancada por uma thread (Runnable) -> lote I/O-bound em paralelo
     public void lancarNotasPorArquivo(String caminhoArquivo) {
 
-        // 1) leitura do arquivo: sequencial (rapida e evita concorrencia na leitura)
+        // 1) le o arquivo (sequencial)
         List<String[]> registros = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
             String linha;
@@ -48,36 +45,51 @@ public class Corretor extends Pessoa {
             return;
         }
 
-        // 2) lancamento em paralelo: pool limitado p/ nao estourar o max_connections do MySQL
-        ExecutorService pool = Executors.newFixedThreadPool(8);
+        // 2) cria uma thread (Runnable) por nota e inicia todas
+        List<Thread> threads = new ArrayList<>();
         for (String[] campos : registros) {
-            pool.submit(() -> {
-                try {
-                    String cpf = campos[0].trim();
-                    int idVestibular = Integer.parseInt(campos[1].trim());
-                    int nota = Integer.parseInt(campos[2].trim());
-
-                    // cada task usa o PROPRIO DAO (conexao propria) -> thread-safe
-                    VestibulandoPrestaVestibularDAO dao = new VestibulandoPrestaVestibularDAO();
-                    if (dao.lancarNota(cpf, idVestibular, nota))
-                        System.out.println("Nota " + nota + " lancada para " + cpf);
-                    else
-                        System.out.println("Falha ao lancar nota de " + cpf);
-                } catch (NumberFormatException e) {
-                    System.out.println("Linha com numero invalido: " + e.getMessage());
-                }
-            });
+            Thread t = new Thread(new LancadorDeNota(campos));
+            t.start();
+            threads.add(t);
         }
 
-        // 3) encerra o pool e espera todas as notas terminarem
-        pool.shutdown();
-        try {
-            pool.awaitTermination(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("Lancamento de notas interrompido.");
+        // 3) espera todas as threads terminarem (join)
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.out.println("Lancamento interrompido.");
+            }
         }
 
         System.out.println("Lancamento de notas finalizado.");
+    }
+
+    // classe que implementa Runnable: a tarefa de lancar UMA nota
+    private static class LancadorDeNota implements Runnable {
+        private final String[] campos;
+
+        public LancadorDeNota(String[] campos) {
+            this.campos = campos;
+        }
+
+        @Override
+        public void run() {
+            try {
+                String cpf = campos[0].trim();
+                int idVestibular = Integer.parseInt(campos[1].trim());
+                int nota = Integer.parseInt(campos[2].trim());
+
+                // cada thread usa o PROPRIO DAO (conexao propria) -> thread-safe
+                VestibulandoPrestaVestibularDAO dao = new VestibulandoPrestaVestibularDAO();
+                if (dao.lancarNota(cpf, idVestibular, nota))
+                    System.out.println("Nota " + nota + " lancada para " + cpf);
+                else
+                    System.out.println("Falha ao lancar nota de " + cpf);
+            } catch (NumberFormatException e) {
+                System.out.println("Linha com numero invalido: " + e.getMessage());
+            }
+        }
     }
 }
