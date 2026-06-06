@@ -5,9 +5,9 @@ public abstract class ConnectionDao
 {
     Connection connection;     //Conexao com o banco
 
-    PreparedStatement pst ;   //Comando SQL com parâmetros
-    Statement st ;           //Comando SQL sem parâmetros
-    ResultSet rs ;          //resultado de consultas
+    PreparedStatement pst ;   //Comando SQL com parameotros
+    Statement st ;           //Comando SQL sem parameotros
+    ResultSet rs ;          //resulltado de consultas
 
     String database = "faculdade";
     String user = "root";
@@ -17,12 +17,12 @@ public abstract class ConnectionDao
     public Connection connectToDb() {
         try
         {
-            connection = DriverManager.getConnection(url,user,password);
+            connection = DriverManager.getConnection(url, user, password);
         }
         catch (SQLException e) {
-            System.out.println("Erro ao conectar com o banco de dados");
+            System.out.println("Erro ao conectar com o banco de dados: " + e.getMessage());
         }
-        return null ;
+        return connection;
     }
 
 }
